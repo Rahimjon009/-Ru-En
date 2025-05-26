@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Переводчик RU ⇄ EN</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      padding: 20px;
+      color: #222;
+    }
+    h2 {
+      text-align: center;
+    }
+    select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #result, #history {
+      margin-top: 15px;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 17px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn-group button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Русско-Английский Переводчик</h2>
+
+  <select id="langSelect">
+    <option value="ru|en">Русский → Английский</option>
+    <option value="en|ru">Английский → Русский</option>
+  </select>
+
+  <textarea id="inputText" rows="4" placeholder="Введите текст..."></textarea>
+
+  <div class="btn-group">
+    <button onclick="translate()">Перевести</button>
+    <button onclick="clearText()">Очистить</button>
+    <button onclick="speak()">Озвучить</button>
+  </div>
+
+  <div id="result">Здесь будет перевод</div>
+
+  <h3>История переводов:</h3>
+  <div id="history"></div>
+
+  <script>
+    const resultDiv = document.getElementById("result");
+    const historyDiv = document.getElementById("history");
+
+    function translate() {
+      const text = document.getElementById("inputText").value;
+      const langPair = document.getElementById("langSelect").value;
+
+      if (!text.trim()) {
+        resultDiv.innerText = "Введите текст для перевода.";
+        return;
+      }
+
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const translated = data.responseData.translatedText;
+          resultDiv.innerText = translated;
+
+          // Сохраняем в историю
+          const entry = `<p><strong>Оригинал:</strong> ${text}<br><strong>Перевод:</strong> ${translated}</p>`;
+          historyDiv.innerHTML = entry + historyDiv.innerHTML;
+        })
+        .catch(err => {
+          console.error(err);
+          resultDiv.innerText = "Ошибка при переводе.";
+        });
+    }
+
+    function clearText() {
+      document.getElementById("inputText").value = "";
+      resultDiv.innerText = "Здесь будет перевод";
+    }
+
+    function speak() {
+      const text = resultDiv.innerText;
+      const langPair = document.getElementById("langSelect").value;
+      const lang = langPair.split("|")[1]; // целевой язык
+
+      if (!text.trim()) return;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang === "ru" ? "ru-RU" : "en-US";
+      speechSynthesis.speak(utterance);
+    }
+  </script>
+
+</body>
+</html>
